@@ -1,5 +1,5 @@
 #!/bin/bash
-DIR="/opt/arrowhead/ArrowheadNode"
+DIR="/opt/arrowhead/ArrowheadNode05"
 if [ -f $DIR"/eosd.pid" ]; then
 pid=`cat $DIR"/eosd.pid"`
 echo $pid
