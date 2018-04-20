@@ -1,9 +1,13 @@
 use strict;
+use LWP::UserAgent;
+use URI::Escape;
 use Sys::Info;
 use Sys::Info::Constants qw( :device_cpu );
 my $info = Sys::Info->new;
 my $cpu  = $info->device('CPU');
 my $os = $info->os();
+
+my $post_url = "http://eosslc.com:3000/bpstats";
 
 my $datadir = $ARGV[0];
 
@@ -39,23 +43,46 @@ if($proc_count < 2) {
 	print "Restarted: $datadir/start.sh [$rt]\n";
 	$nodeos_status = "restarted";
 }
+my $external_ip = `curl -s ipecho.net/plain;echo`;
+chomp($external_ip);
+my $internal_ip = `hostname -I`;
+chomp($internal_ip);
+my $hostname = `hostname`;
+chomp($hostname);
 
-# Get top info:
-my @top = `top -n 1`;
-chomp(@top);
+my $os_name = $os->name( edition => 1);
+my $uptime_days = sprintf("%.2f", $os->tick_count/(60*60*24));
+my $cpu_info = scalar($cpu->identify);
+my $cpu_speed = $cpu->speed;
+my $cpu_count = $cpu->count || 1;
+my $cpu_load = $cpu->load  || 0;
+my $timestamp = localtime;
 
-print "{\n";
-printf "\"producer\": \"%s\",\n", $producer;
-printf "\"status\": \"%s\",\n", $nodeos_status;
-printf "\"os\": \"%s\",\n", $os->name( edition => 1);
-printf "\"server_uptime\": \"%.2f days\",\n", $os->tick_count/(60*60*24);
-printf "\"cpu_info:\": \"%s\",\n", scalar($cpu->identify)  || 'N/A';
-printf "\"cpu_speed\": \"%s MHz\",\n", $cpu->speed || 'N/A';
-printf "\"cpu_count\": \"%d\",\n"  , $cpu->count || 1;
-printf "\"avg_cpu_load\": \"%s\",\n" , $cpu->load  || 0;
-printf "\"top_cpus_load\": \"%s\",\n", $top[2];
-printf "\"top_mem\": \"%s\",\n", $top[3];
-printf "\"top_swap\": \"%s\",\n", $top[4];
-print "}\n";
+my $json = "{" .
+	"\"producer\": \"$producer\"," .
+	"\"node_status\": \"$nodeos_status\"," .
+	"\"os_name\": \"$os_name\"," .
+	"\"hostname\": \"$hostname\"," .
+	"\"external_ip\": \"$external_ip\"," .
+	"\"internal_ip\": \"$internal_ip\"," . 
+	"\"server_uptime\": \"".$uptime_days." days\"," .
+	"\"cpu_info:\": \"$cpu_info\"," . 
+	"\"cpu_speed\": \"$cpu_speed MHz\"," . 
+	"\"cpu_count\": \"$cpu_count\"," .
+	"\"avg_cpu_load\": \"$cpu_load\"," .
+	"\"timestamp\": \"$timestamp\"" .
+	"}";
+#print $json;
+
+#Post Json to report server:;
+my $ua = LWP::UserAgent->new;
+my $req = HTTP::Request->new(POST => $post_url);
+$req->header('Content-Type' => 'application/json');
+$req->content($json);
+
+my $response = $ua->request($req);
+if (! $response->is_success() ) {
+    print("Error sending to report server: " . $response->status_line());
+}
 
 exit;
