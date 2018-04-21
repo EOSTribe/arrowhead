@@ -1,6 +1,5 @@
 use strict;
 use LWP::UserAgent;
-use URI::Escape;
 use Sys::Info;
 use Sys::Info::Constants qw( :device_cpu );
 my $info = Sys::Info->new;
@@ -49,6 +48,16 @@ my $internal_ip = `hostname -I`;
 chomp($internal_ip);
 my $hostname = `hostname`;
 chomp($hostname);
+my @ram_stats = `free -m`;
+chomp(@ram_stats);
+# Mem:	 total        used        free      shared  buff/cache   available
+my $ram_info = @ram_stats[1];
+my @ram_metrics = split /\s+/, $ram_info;
+my $ram_total = $ram_metrics[1];
+my $ram_used = $ram_metrics[2];
+my $ram_free = $ram_metrics[3];
+my $ram_cache = $ram_metrics[5];
+my $ram_available = $ram_metrics[6];
 
 my $os_name = $os->name( edition => 1);
 my $uptime_days = sprintf("%.2f", $os->tick_count/(60*60*24));
@@ -66,10 +75,15 @@ my $json = "{" .
 	"\"external_ip\": \"$external_ip\"," .
 	"\"internal_ip\": \"$internal_ip\"," . 
 	"\"server_uptime\": \"".$uptime_days." days\"," .
-	"\"cpu_info:\": \"$cpu_info\"," . 
+	"\"cpu_info\": \"$cpu_info\"," . 
 	"\"cpu_speed\": \"$cpu_speed MHz\"," . 
 	"\"cpu_count\": \"$cpu_count\"," .
-	"\"avg_cpu_load\": \"$cpu_load\"," .
+	"\"cpu_load\": \"$cpu_load\"," .
+	"\"ram_total\": \"$ram_total\"," .
+	"\"ram_used\": \"$ram_used\"," .
+	"\"ram_free\": \"$ram_free\"," .
+	"\"ram_cache\": \"$ram_cache\"," .
+	"\"ram_available\": \"$ram_available\"," .
 	"\"timestamp\": \"$timestamp\"" .
 	"}";
 #print $json;
