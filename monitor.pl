@@ -17,14 +17,7 @@ if(! -d $datadir ) {
 } elsif (!-f $datadir . "/config.ini") {
 	print "Node config.ini file found under dir " . $datadir . "\n";
 	exit 1;
-} elsif(!-f $datadir . "/start.sh") {
-	open FILE, ">$datadir/start.sh";
-	print FILE "#!/bin/bash\n";
-	print FILE "DATADIR=$datadir\n";
-	print FILE "nodeos --enable-stale-production true --data-dir \$DATADIR --config-dir \$DATADIR > \$DATADIR/stdout.txt 2> \$DATADIR/stderr.txt & echo \$! > \$DATADIR/eosd.pid\n";
-	close FILE;	
-	my $rt = `chmod +x $datadir/start.sh`;
-}
+} 
 # Get producer:
 my $producer = `grep producer-name $datadir/config.ini`;
 $producer =~ s/producer-name\s*=\s*//;
@@ -38,9 +31,7 @@ foreach my $proc (@nodeos_process) {
 
 my $nodeos_status = "running";
 if($proc_count < 2) {
-	my $rt = `$datadir/start.sh`;
-	print "Restarted: $datadir/start.sh [$rt]\n";
-	$nodeos_status = "restarted";
+	$nodeos_status = "stopped";
 }
 my $external_ip = `curl -s ipecho.net/plain;echo`;
 chomp($external_ip);

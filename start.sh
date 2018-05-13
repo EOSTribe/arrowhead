@@ -1,5 +1,6 @@
 #!/bin/bash
-DATADIR=/opt/arrowhead/ArrowheadNode
+BINDIR=/PATH_TO_BIN
+DATADIR=/PATH_TO_NODE
 
-nodeos --enable-stale-production true --data-dir $DATADIR --config-dir $DATADIR > $DATADIR/stdout.txt 2> $DATADIR/stderr.txt & echo $! > $DATADIR/eosd.pid
+$BINDIR/nodeos  --data-dir $DATADIR --config-dir $DATADIR > $DATADIR/stdout.txt 2> $DATADIR/stderr.txt & echo $! > $DATADIR/eosd.pid
 
